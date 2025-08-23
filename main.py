@@ -1,14 +1,29 @@
-from dotenv import load_dotenv
-from portia import (
-    Portia,
-    default_config,
-    example_tool_registry,
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI(
+    title="Portia AI Backend",
+    description="API for Portia AI services",
+    version="1.0.0"
 )
 
-load_dotenv()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# Instantiate Portia with the default config which uses Open AI, and with some example tools.
-portia = Portia(tools=example_tool_registry)
-# Run the test query and print the output!
-plan_run = portia.run('add 1 + 2')
-print(plan_run.model_dump_json(indent=2))
+# Include routes
+# app.include_router(github_routes.router, prefix="/api/github", tags=["github"])
+# app.include_router(gmail_routes.router, prefix="/api/gmail", tags=["gmail"])
+# app.include_router(docs_routes.router, prefix="/api/docs", tags=["docs"])
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "service": "portia-backend"}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
