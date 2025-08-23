@@ -3,6 +3,8 @@ from jose import JWTError, jwt
 import os
 from models.auth_models import LoginRequest, LoginResponse
 from services.portia_client import PortiaClient
+import uuid
+import aiohttp
 
 SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 ALGORITHM = "HS256"
@@ -37,24 +39,48 @@ class AuthService:
     
     @staticmethod
     async def login(request: LoginRequest) -> LoginResponse:
-        """Login with OpenAI API key and get JWT token"""
-        is_valid = await PortiaClient.test_openai_key(request.openai_api_key)
+        is_valid = await AuthService.test_openai_key_fast(request.openai_api_key)
         
         if not is_valid:
             raise ValueError("Invalid OpenAI API key")
         
-        # Create JWT token
-        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        user_id = str(uuid.uuid4())
+        
         access_token = AuthService.create_access_token(
             data={
                 "openai_api_key": request.openai_api_key,
-                "user_id": request.user_id
-            },
-            expires_delta=access_token_expires
+                "user_id": user_id
+            }
         )
         
         return LoginResponse(
             access_token=access_token,
             token_type="bearer",
-            user_id=request.user_id
+            user_id=user_id
         )
+
+    @staticmethod
+    async def test_openai_key_fast(openai_api_key: str) -> bool:
+        try:
+            async with aiohttp.ClientSession() as session:
+                headers = {
+                    "Authorization": f"Bearer {openai_api_key}",
+                    "Content-Type": "application/json"
+                }
+                
+                data = {
+                    "model": "gpt-3.5-turbo",
+                    "messages": [{"role": "user", "content": "Hello"}],
+                    "max_tokens": 5
+                }
+                
+                async with session.post(
+                    "https://api.openai.com/v1/chat/completions",
+                    headers=headers,
+                    json=data,
+                    timeout=5
+                ) as response:
+                    return response.status == 200
+                    
+        except Exception:
+            return False

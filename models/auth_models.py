@@ -3,7 +3,6 @@ from typing import Optional
 
 class LoginRequest(BaseModel):
     openai_api_key: str
-    user_id: str
 
 class LoginResponse(BaseModel):
     access_token: str
