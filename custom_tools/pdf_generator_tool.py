@@ -94,8 +94,23 @@ def pdf_generator_tool(
             # Remove markdown bold/italic
             text = re.sub(r'\*\*([^*]+)\*\*', r'<b>\1</b>', text)  # **bold** -> <b>bold</b>
             text = re.sub(r'\*([^*]+)\*', r'<i>\1</i>', text)      # *italic* -> <i>italic</i>
-            # Convert markdown links
-            text = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', r'<a href="\2" color="blue">\1</a>', text)
+            
+            # Handle markdown links - separate internal vs external
+            # Remove internal anchor links (they cause PDF errors)
+            text = re.sub(r'\[([^\]]+)\]\(#[^)]+\)', r'\1', text)  # [Text](#anchor) -> Text
+            
+            # Keep external links but make them safe
+            def safe_link(match):
+                link_text = match.group(1)
+                url = match.group(2)
+                # Only keep http/https links
+                if url.startswith(('http://', 'https://')):
+                    return f'<a href="{url}" color="blue">{link_text}</a>'
+                else:
+                    return link_text  # Just return text for problematic links
+            
+            text = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', safe_link, text)
+            
             # Remove weird symbols
             text = text.replace('■■■', '   ')  # Replace with spaces
             text = text.replace('---', '')     # Remove horizontal rules
@@ -215,10 +230,35 @@ def pdf_generator_tool(
                 cleaned_text = clean_text(para_text)
                 story.append(Paragraph(cleaned_text, body_style))
         
-        # Build PDF
-        doc.build(story)
-        
-        return f"Successfully generated PDF: {pdf_path}"
+        # Build PDF with error handling
+        try:
+            doc.build(story)
+            return f"Successfully generated PDF: {pdf_path}"
+        except Exception as pdf_error:
+            # Try to build with minimal content if there are formatting issues
+            simple_story = [
+                Paragraph(title, title_style),
+                Spacer(1, 20)
+            ]
+            
+            # Add content as simple paragraphs without complex formatting
+            for line in markdown_content.split('\n'):
+                line = line.strip()
+                if line and not line.startswith('#'):
+                    # Clean line of problematic characters
+                    clean_line = re.sub(r'[^\w\s\-\.\,\!\?\:\;]', '', line)
+                    if clean_line:
+                        simple_story.append(Paragraph(clean_line, body_style))
+                        simple_story.append(Spacer(1, 3))
+            
+            try:
+                doc.build(simple_story)
+                return f"Successfully generated simplified PDF: {pdf_path} (some formatting removed due to link issues)"
+            except Exception:
+                # Final fallback: save as text
+                txt_path = output_dir / f"{filename}.txt"
+                txt_path.write_text(f"{title}\n\n{markdown_content}", encoding="utf-8")
+                return f"PDF generation failed, saved as text instead: {txt_path}. Error: {str(pdf_error)}"
         
     except Exception as e:
         # Fallback: save as text file
