@@ -1,8 +1,12 @@
 # 🚀 Portia AI Backend
 
 > **Intelligent Document Generation & Email Automation Platform**
+> 
+> **🏆 AgentHack Hackathon Submission**
 
 A powerful FastAPI backend that combines **Portia AI**, **Gmail integration**, and **intelligent document generation** to create a comprehensive automation platform. Generate professional PDFs from web content, send automated emails, and manage everything through secure JWT authentication.
+
+**Built during AgentHack 2024** - A complete AI automation platform developed in just 48 hours!
 
 [![Python](https://img.shields.io/badge/Python-3.12+-blue.svg)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com)
@@ -378,14 +382,6 @@ result = pdf_tool(
 
 ---
 
-## 🚀 Deployment
-
-### Using Render
-
-1. **Connect your repository** to Render
-2. **Set environment variables** in Render dashboard
-3. **Deploy** - the app auto-detects the port
-
 ### Using Docker
 
 ```dockerfile
@@ -410,14 +406,33 @@ PORTIA_API_KEY=your_key
 TAVILY_API_KEY=your_key
 SECRET_KEY=your_secret
 
-# Optional
-PORT=8000
-DATABASE_URL=your_db_url
-```
 
 ---
 
-## 🤝 Contributing
+## 🏆 AgentHack Hackathon Submission
+
+### 🎯 **Challenge**: Build an AI Agent Platform
+**Team**: [Your Team Name]  
+**Hackathon**: AgentHack 2024  
+**Duration**: 48 Hours  
+**Theme**: AI Automation & Productivity
+
+### 🚀 **What We Built**
+In just **48 hours**, we created a comprehensive AI automation platform featuring:
+
+- ✅ **Intelligent Document Generation** - AI agents that research, extract, and compile professional documentation
+- ✅ **Smart Email Automation** - Context-aware email generation with Gmail integration
+- ✅ **Custom Portia AI Tools** - Extensible web crawling, content extraction, and PDF generation
+- ✅ **Enterprise Security** - JWT authentication with OAuth2 integration
+- ✅ **Production Ready** - Deployed with auto-cleanup and error handling
+
+### 🎨 **Innovation Highlights**
+
+**🤖 Multi-Agent Workflow**
+```mermaid
+graph LR
+    A[Research Agent] --> B[Content Agent]
+    B --> C[Writ
 
 1. **Fork** the repository
 2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
@@ -427,28 +442,10 @@ DATABASE_URL=your_db_url
 
 ---
 
-## 📄 License
-
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
 ---
 
-## 🙏 Acknowledgments
 
-- **[Portia AI](https://portia.ai)** - For the amazing AI automation platform
-- **[FastAPI](https://fastapi.tiangolo.com)** - For the excellent web framework
-- **[OpenAI](https://openai.com)** - For GPT integration
-- **[Tavily](https://tavily.com)** - For web search and extraction capabilities
 
----
-
-## 📞 Support
-
-- **Documentation**: [API Docs](http://localhost:8000/docs)
-- **Issues**: [GitHub Issues](https://github.com/yourusername/portia-ai-backend/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/portia-ai-backend/discussions)
-
----
 
 <div align="center">
 
