@@ -1,14 +1,17 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 
+
 class SendEmailRequest(BaseModel):
     to: EmailStr
     subject: str
     body: str
 
+
 class AutomatedEmailRequest(BaseModel):
     to: EmailStr
     subject: str
+
 
 class SendEmailResponse(BaseModel):
     success: bool
