@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes import auth_routes, gmail_routes
+from routes import auth_routes, gmail_routes, document_routes
 
 app = FastAPI(
     title="Portia AI Backend",
@@ -18,6 +18,7 @@ app.add_middleware(
 
 app.include_router(auth_routes.router, prefix="/auth", tags=["auth"])
 app.include_router(gmail_routes.router, prefix="/api", tags=["gmail"])
+app.include_router(document_routes.router, prefix="/api", tags=["documents"])
 
 @app.get("/health")
 async def health_check():
