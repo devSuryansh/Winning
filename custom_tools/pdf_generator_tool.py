@@ -1,267 +1,168 @@
-from pathlib import Path
-from typing import Annotated
-from portia import tool
-import markdown
-from reportlab.lib.pagesizes import letter, A4
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import inch
-from reportlab.lib import colors
-from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_JUSTIFY
-import re
-from html import unescape
+# from pathlib import Path
+# from typing import Annotated
+# from portia import tool
+# from fpdf import FPDF
+# import re
 
-@tool
-def pdf_generator_tool(
-    markdown_content: Annotated[str, "The markdown content to convert to PDF"],
-    filename: Annotated[str, "The output PDF filename (without extension)"],
-    title: Annotated[str, "The document title"] = "Generated Documentation"
-) -> str:
-    """Converts markdown content to a professional PDF document using ReportLab."""
+# @tool
+# def pdf_generator_tool(
+#     markdown_content: Annotated[str, "The markdown content to convert to PDF"],
+#     filename: Annotated[str, "The output PDF filename (without extension)"],
+#     title: Annotated[str, "The document title"] = "Generated Documentation"
+# ) -> str:
+#     """Converts markdown content to a professional PDF document using fpdf2."""
     
-    # Create output directory
-    output_dir = Path("docs")
-    output_dir.mkdir(exist_ok=True)
+#     # Create output directory
+#     output_dir = Path("docs")
+#     output_dir.mkdir(exist_ok=True)
     
-    pdf_path = output_dir / f"{filename}.pdf"
+#     pdf_path = output_dir / f"{filename}.pdf"
     
-    try:
-        # Create PDF document
-        doc = SimpleDocTemplate(
-            str(pdf_path),
-            pagesize=A4,
-            rightMargin=72,
-            leftMargin=72,
-            topMargin=72,
-            bottomMargin=18
-        )
+#     try:
+#         # Pre-clean the entire markdown content first
+#         markdown_content = markdown_content.replace('•', '-')
+#         markdown_content = markdown_content.replace('●', '-')
+#         markdown_content = markdown_content.replace('◦', '-')
+#         markdown_content = markdown_content.replace('‣', '-')
+#         markdown_content = markdown_content.replace('⁃', '-')
+#         markdown_content = markdown_content.replace('–', '-')
+#         markdown_content = markdown_content.replace('—', '-')
+#         markdown_content = markdown_content.replace(''', "'")
+#         markdown_content = markdown_content.replace(''', "'")
+#         markdown_content = markdown_content.replace('"', '"')
+#         markdown_content = markdown_content.replace('"', '"')
+#         markdown_content = markdown_content.replace('…', '...')
         
-        # Get styles
-        styles = getSampleStyleSheet()
+#         # Remove any non-ASCII characters from the entire content
+#         markdown_content = ''.join(char if ord(char) < 128 else '?' for char in markdown_content)
         
-        # Create custom styles
-        title_style = ParagraphStyle(
-            'CustomTitle',
-            parent=styles['Heading1'],
-            fontSize=24,
-            spaceAfter=30,
-            alignment=TA_CENTER,
-            textColor=colors.HexColor('#2c3e50')
-        )
+#         # Create PDF document
+#         pdf = FPDF()
+#         pdf.add_page()
+#         pdf.set_auto_page_break(auto=True, margin=15)
         
-        heading1_style = ParagraphStyle(
-            'CustomHeading1',
-            parent=styles['Heading1'],
-            fontSize=18,
-            spaceAfter=12,
-            spaceBefore=20,
-            textColor=colors.HexColor('#2c3e50')
-        )
+#         # Add title (also clean it)
+#         clean_title = ''.join(char if ord(char) < 128 else '?' for char in title)
+#         pdf.set_font("Helvetica", "B", 16)
+#         pdf.cell(200, 15, clean_title, align="C")
+#         pdf.ln(20)
         
-        heading2_style = ParagraphStyle(
-            'CustomHeading2',
-            parent=styles['Heading2'],
-            fontSize=14,
-            spaceAfter=10,
-            spaceBefore=15,
-            textColor=colors.HexColor('#34495e')
-        )
-        
-        body_style = ParagraphStyle(
-            'CustomBody',
-            parent=styles['Normal'],
-            fontSize=11,
-            spaceAfter=6,
-            alignment=TA_JUSTIFY,
-            leftIndent=0,
-            rightIndent=0
-        )
-        
-        code_style = ParagraphStyle(
-            'CustomCode',
-            parent=styles['Code'],
-            fontSize=9,
-            spaceAfter=6,
-            spaceBefore=6,
-            backColor=colors.HexColor('#f8f9fa'),
-            borderColor=colors.HexColor('#e9ecef'),
-            borderWidth=1,
-            borderPadding=6
-        )
-        
-        def clean_text(text):
-            """Clean markdown formatting for PDF"""
-            # Remove markdown bold/italic
-            text = re.sub(r'\*\*([^*]+)\*\*', r'<b>\1</b>', text)  # **bold** -> <b>bold</b>
-            text = re.sub(r'\*([^*]+)\*', r'<i>\1</i>', text)      # *italic* -> <i>italic</i>
+#         # Clean the content first
+#         def clean_text(text):
+#             """Clean text for PDF compatibility"""
+#             # Replace Unicode characters with ASCII equivalents - be more aggressive
+#             text = text.replace('•', '-')
+#             text = text.replace('●', '-')
+#             text = text.replace('◦', '-')
+#             text = text.replace('‣', '-')
+#             text = text.replace('⁃', '-')
+#             text = text.replace('–', '-')
+#             text = text.replace('—', '-')
+#             text = text.replace(''', "'")
+#             text = text.replace(''', "'")
+#             text = text.replace('"', '"')
+#             text = text.replace('"', '"')
+#             text = text.replace('…', '...')
             
-            # Handle markdown links - separate internal vs external
-            # Remove internal anchor links (they cause PDF errors)
-            text = re.sub(r'\[([^\]]+)\]\(#[^)]+\)', r'\1', text)  # [Text](#anchor) -> Text
+#             # Remove any remaining non-ASCII characters
+#             text = ''.join(char if ord(char) < 128 else '?' for char in text)
             
-            # Keep external links but make them safe
-            def safe_link(match):
-                link_text = match.group(1)
-                url = match.group(2)
-                # Only keep http/https links
-                if url.startswith(('http://', 'https://')):
-                    return f'<a href="{url}" color="blue">{link_text}</a>'
-                else:
-                    return link_text  # Just return text for problematic links
+#             # Remove markdown formatting
+#             text = re.sub(r'\*\*([^*]+)\*\*', r'\1', text)  # **bold**
+#             text = re.sub(r'\*([^*]+)\*', r'\1', text)      # *italic*
+#             text = re.sub(r'`([^`]+)`', r'\1', text)        # `code`
             
-            text = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', safe_link, text)
+#             # Handle links
+#             text = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', r'\1 (\2)', text)
             
-            # Remove weird symbols
-            text = text.replace('■■■', '   ')  # Replace with spaces
-            text = text.replace('---', '')     # Remove horizontal rules
-            return text
+#             # Remove code block markers
+#             text = re.sub(r'```[^\n]*\n', '', text)
+#             text = re.sub(r'```', '', text)
+            
+#             return text
         
-        # Parse markdown content
-        story = []
+#         # Process content line by line
+#         lines = markdown_content.split('\n')
         
-        # Add title
-        story.append(Paragraph(title, title_style))
-        story.append(Spacer(1, 20))
-        
-        # Split content into lines and process
-        lines = markdown_content.split('\n')
-        current_paragraph = []
-        in_code_block = False
-        code_block_content = []
-        
-        for line in lines:
-            original_line = line
-            line = line.strip()
+#         for line in lines:
+#             line = line.strip()
             
-            # Skip horizontal rules and empty decorative lines
-            if line in ['---', '■■■', '***', '___'] or not line:
-                if current_paragraph:
-                    para_text = ' '.join(current_paragraph)
-                    if para_text.strip():
-                        cleaned_text = clean_text(para_text)
-                        story.append(Paragraph(cleaned_text, body_style))
-                        story.append(Spacer(1, 6))
-                    current_paragraph = []
-                continue
+#             # Skip empty lines and separators
+#             if not line or line in ['---', '***', '___']:
+#                 pdf.ln(5)
+#                 continue
             
-            # Handle code blocks
-            if line.startswith('```') or line.startswith('npx ') or line.startswith('cd ') or line.startswith('npm '):
-                if current_paragraph:
-                    para_text = ' '.join(current_paragraph)
-                    if para_text.strip():
-                        cleaned_text = clean_text(para_text)
-                        story.append(Paragraph(cleaned_text, body_style))
-                    current_paragraph = []
+#             # Clean the line
+#             clean_line = clean_text(line)
+            
+#             # Handle headers
+#             if line.startswith('# '):
+#                 pdf.set_font("Helvetica", "B", 14)
+#                 pdf.ln(5)
+#                 pdf.cell(200, 10, clean_line[2:].strip())
+#                 pdf.ln(10)
                 
-                if line.startswith('```'):
-                    in_code_block = not in_code_block
-                    continue
-                else:
-                    # Single line code
-                    story.append(Paragraph(f"<pre>{line}</pre>", code_style))
-                    story.append(Spacer(1, 6))
-                    continue
-            
-            if in_code_block:
-                code_block_content.append(line)
-                continue
-            
-            # Handle headers
-            if line.startswith('### '):
-                if current_paragraph:
-                    para_text = ' '.join(current_paragraph)
-                    if para_text.strip():
-                        cleaned_text = clean_text(para_text)
-                        story.append(Paragraph(cleaned_text, body_style))
-                    current_paragraph = []
+#             elif line.startswith('## '):
+#                 pdf.set_font("Helvetica", "B", 12)
+#                 pdf.ln(4)
+#                 pdf.cell(200, 8, clean_line[3:].strip())
+#                 pdf.ln(8)
                 
-                header_text = clean_text(line[4:].strip())
-                story.append(Paragraph(header_text, heading2_style))
-                story.append(Spacer(1, 6))
-                continue
+#             elif line.startswith('### '):
+#                 pdf.set_font("Helvetica", "B", 11)
+#                 pdf.ln(3)
+#                 pdf.cell(200, 7, clean_line[4:].strip())
+#                 pdf.ln(7)
                 
-            elif line.startswith('## '):
-                if current_paragraph:
-                    para_text = ' '.join(current_paragraph)
-                    if para_text.strip():
-                        cleaned_text = clean_text(para_text)
-                        story.append(Paragraph(cleaned_text, body_style))
-                    current_paragraph = []
+#             # Handle bullet points
+#             elif line.startswith(('- ', '* ', '• ')):
+#                 pdf.set_font("Helvetica", "", 10)
+#                 bullet_text = f"- {clean_line[2:].strip()}"
+#                 # Split long bullet points into multiple lines
+#                 if len(bullet_text) > 80:
+#                     words = bullet_text.split()
+#                     current_line = ""
+#                     for word in words:
+#                         if len(current_line + " " + word) < 80:
+#                             current_line = current_line + " " + word if current_line else word
+#                         else:
+#                             pdf.cell(200, 6, current_line)
+#                             pdf.ln(6)
+#                             current_line = "  " + word  # Indent continuation
+#                     if current_line:
+#                         pdf.cell(200, 6, current_line)
+#                         pdf.ln(6)
+#                 else:
+#                     pdf.cell(200, 6, bullet_text)
+#                     pdf.ln(6)
                 
-                header_text = clean_text(line[3:].strip())
-                story.append(Paragraph(header_text, heading2_style))
-                story.append(Spacer(1, 6))
-                continue
-                
-            elif line.startswith('# '):
-                if current_paragraph:
-                    para_text = ' '.join(current_paragraph)
-                    if para_text.strip():
-                        cleaned_text = clean_text(para_text)
-                        story.append(Paragraph(cleaned_text, body_style))
-                    current_paragraph = []
-                
-                header_text = clean_text(line[2:].strip())
-                story.append(Paragraph(header_text, heading1_style))
-                story.append(Spacer(1, 10))
-                continue
-            
-            # Handle bullet points
-            if line.startswith('• ') or line.startswith('- ') or line.startswith('* '):
-                if current_paragraph:
-                    para_text = ' '.join(current_paragraph)
-                    if para_text.strip():
-                        cleaned_text = clean_text(para_text)
-                        story.append(Paragraph(cleaned_text, body_style))
-                    current_paragraph = []
-                
-                bullet_text = line[2:].strip() if line.startswith('• ') else line[2:].strip()
-                cleaned_bullet = clean_text(bullet_text)
-                story.append(Paragraph(f"• {cleaned_bullet}", body_style))
-                continue
-            
-            # Regular text
-            current_paragraph.append(line)
+#             # Handle regular text
+#             elif clean_line:
+#                 pdf.set_font("Helvetica", "", 10)
+#                 # Split long lines
+#                 if len(clean_line) > 80:
+#                     words = clean_line.split()
+#                     current_line = ""
+#                     for word in words:
+#                         if len(current_line + " " + word) < 80:
+#                             current_line = current_line + " " + word if current_line else word
+#                         else:
+#                             pdf.cell(200, 6, current_line)
+#                             pdf.ln(6)
+#                             current_line = word
+#                     if current_line:
+#                         pdf.cell(200, 6, current_line)
+#                         pdf.ln(6)
+#                 else:
+#                     pdf.cell(200, 6, clean_line)
+#                     pdf.ln(6)
         
-        # Add remaining paragraph
-        if current_paragraph:
-            para_text = ' '.join(current_paragraph)
-            if para_text.strip():
-                cleaned_text = clean_text(para_text)
-                story.append(Paragraph(cleaned_text, body_style))
+#         # Save PDF
+#         pdf.output(str(pdf_path))
+#         return f"Successfully generated PDF: {pdf_path}"
         
-        # Build PDF with error handling
-        try:
-            doc.build(story)
-            return f"Successfully generated PDF: {pdf_path}"
-        except Exception as pdf_error:
-            # Try to build with minimal content if there are formatting issues
-            simple_story = [
-                Paragraph(title, title_style),
-                Spacer(1, 20)
-            ]
-            
-            # Add content as simple paragraphs without complex formatting
-            for line in markdown_content.split('\n'):
-                line = line.strip()
-                if line and not line.startswith('#'):
-                    # Clean line of problematic characters
-                    clean_line = re.sub(r'[^\w\s\-\.\,\!\?\:\;]', '', line)
-                    if clean_line:
-                        simple_story.append(Paragraph(clean_line, body_style))
-                        simple_story.append(Spacer(1, 3))
-            
-            try:
-                doc.build(simple_story)
-                return f"Successfully generated simplified PDF: {pdf_path} (some formatting removed due to link issues)"
-            except Exception:
-                # Final fallback: save as text
-                txt_path = output_dir / f"{filename}.txt"
-                txt_path.write_text(f"{title}\n\n{markdown_content}", encoding="utf-8")
-                return f"PDF generation failed, saved as text instead: {txt_path}. Error: {str(pdf_error)}"
-        
-    except Exception as e:
-        # Fallback: save as text file
-        txt_path = output_dir / f"{filename}.txt"
-        txt_path.write_text(f"{title}\n\n{markdown_content}", encoding="utf-8")
-        return f"PDF generation failed, saved as text instead: {txt_path}. Error: {str(e)}"
+#     except Exception as e:
+#         # Fallback: save as text file
+#         txt_path = output_dir / f"{filename}.txt"
+#         txt_path.write_text(f"{title}\n\n{markdown_content}", encoding="utf-8")
+#         return f"PDF generation failed, saved as text instead: {txt_path}. Error: {str(e)}"

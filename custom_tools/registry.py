@@ -4,7 +4,6 @@ from portia import ToolRegistry
 from .extract_tool import ExtractTool
 from .crawl_tool import CrawlTool
 from .file_writer_tool import file_writer_tool
-from .pdf_generator_tool import pdf_generator_tool
 
 # Create instances of the tools
 extract_tool = ExtractTool()
@@ -15,5 +14,4 @@ custom_tool_registry = ToolRegistry([
     extract_tool,
     crawl_tool,
     file_writer_tool(),
-    pdf_generator_tool(),
 ])
